@@ -61,6 +61,8 @@ public class Main {
         //删除桶
         //MakeBucket.testDeleteBucket();
 
-
+        //图片处理
+//        ImageProcessSample ProcessPicture=new ImageProcessSample();
+//        ProcessPicture.testResizeImage();
     }
 }

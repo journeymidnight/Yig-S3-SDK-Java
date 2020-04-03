@@ -23,8 +23,8 @@ import static org.junit.Assert.*;
 public class s3SimpleDemo extends TestCase {
 
 
-    private final static String ACCESS_KEY = "DrjUiXNcQXih3R5n";
-    private final static String SECRET_KEY = "dqcLTLYnczosouL1v7ZEC7buM8hm1b";
+    private final static String ACCESS_KEY = "hehehehe";
+    private final static String SECRET_KEY = "hehehehe";
     private final static String END_POINT = "oss-cn-north-1.unicloudsrv.com";
     static AmazonS3Client s3 = getAmazonS3Client(ACCESS_KEY, SECRET_KEY, END_POINT);
 
