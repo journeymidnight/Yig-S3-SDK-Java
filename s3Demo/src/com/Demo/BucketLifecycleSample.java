@@ -7,16 +7,19 @@ import com.amazonaws.SDKGlobalConfiguration;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.S3ClientOptions;
-import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
-import com.amazonaws.services.s3.model.BucketLifecycleConfiguration.Transition;
-import com.amazonaws.services.s3.model.StorageClass;
+import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.lifecycle.*;
 
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+
 public class BucketLifecycleSample {
-    private final static String ACCESS_KEY = "DrjUiXNcQXih3R5n";
-    private final static String SECRET_KEY = "dqcLTLYnczosouL1v7ZEC7buM8hm1b";
+    private final static String ACCESS_KEY = "hehehehe";
+    private final static String SECRET_KEY = "hehehehe";
     private final static String END_POINT = "oss-cn-north-1.unicloudsrv.com";
     static AmazonS3Client s3 = getAmazonS3Client(ACCESS_KEY, SECRET_KEY, END_POINT);
 
@@ -39,22 +42,30 @@ public class BucketLifecycleSample {
      */
     @Test
     public void testBucketLifecycle(){
-        // Create a rule to archive objects with the "glacierobjects/" prefix to Glacier immediately.
+        // Create a rule to transition objects to the Standard-Infrequent Access storage class
+        // after 30 days, then to Glacier after 60 days. will delete the objects after 90 days.
+        // The rule applies to all objects with the tag "archive" set to "true".
         BucketLifecycleConfiguration.Rule rule1 = new BucketLifecycleConfiguration.Rule()
-                .withId("Archive immediately rule")
-                .withPrefix("documents/")
-                .addTransition(new Transition().withDays(0).withStorageClass(StorageClass.Glacier))
+                .withId("Archive and then delete rule")
+                .withFilter(new LifecycleFilter(new LifecyclePrefixPredicate("documents/")))
+                .addTransition(new BucketLifecycleConfiguration.Transition().withDays(30).withStorageClass(StorageClass.StandardInfrequentAccess))
+                .addTransition(new BucketLifecycleConfiguration.Transition().withDays(60).withStorageClass(StorageClass.Glacier))
+                .withExpirationInDays(90)
                 .withStatus(BucketLifecycleConfiguration.ENABLED);
 
-        // Create a rule to transition objects to the Standard-Infrequent Access storage class
-        // after 30 days, then to Glacier after 365 days. will delete the objects after 3650 days.
-        // The rule applies to all objects with the tag "archive" set to "true".
+        // Create a rule to transition noncurrentVersion objects to the Glacier storage class after 60 days,
+        // and delete the objects after 90 days.
+        List<LifecycleFilterPredicate> operands = new ArrayList<>();
+        operands.add(new LifecyclePrefixPredicate("logs/"));
+        operands.add(new LifecycleTagPredicate(new Tag("key1","value1")));
+        operands.add(new LifecycleTagPredicate(new Tag("key2","value2")));
+
         BucketLifecycleConfiguration.Rule rule2 = new BucketLifecycleConfiguration.Rule()
                 .withId("Archive and then delete rule")
-                .withPrefix("documents/")
-                .addTransition(new Transition().withDays(30).withStorageClass(StorageClass.StandardInfrequentAccess))
-                .addTransition(new Transition().withDays(365).withStorageClass(StorageClass.Glacier))
-                .withExpirationInDays(3650)
+                .withFilter(new LifecycleFilter(new LifecycleAndOperator(operands)))
+                .addNoncurrentVersionTransition(new BucketLifecycleConfiguration.NoncurrentVersionTransition()
+                        .withDays(60).withStorageClass(StorageClass.Glacier))
+                .withNoncurrentVersionExpirationInDays(90)
                 .withStatus(BucketLifecycleConfiguration.ENABLED);
 
         // Add the rules to a new BucketLifecycleConfiguration.
